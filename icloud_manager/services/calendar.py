@@ -57,7 +57,7 @@ class CalendarService:
         if not calendars:
             return json.dumps({"error": "no calendars found"})
         pguid = calendars[0]["guid"]
-        event = EventObject(pguid=pguid, title=title, start_date=start, end_date=end)
+        event = EventObject(pguid=pguid, title=title, start_date=start, end_date=end, tz=str(self.tz))
         result = self.cal.add_event(event)
         return json.dumps({"status": "created", "id": result.get("guid", ""), "title": title})
 
