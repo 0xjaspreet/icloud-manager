@@ -25,6 +25,18 @@ from icloud_manager.services.contacts import ContactsService
 from icloud_manager.services.findmy import FindMyService
 from icloud_manager.services.drive import DriveService
 
+# Sensitive strings to redact from unexpected tracebacks.
+_sensitive_strings = []
+
+
+def _redact_traceback(exc_type, exc_value, exc_tb):
+    """sys.excepthook that redacts sensitive strings from tracebacks."""
+    text = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    for s in _sensitive_strings:
+        if s:
+            text = text.replace(s, "***REDACTED***")
+    print(text, file=sys.stderr)
+
 
 def get_api() -> PyiCloudService:
     """Authenticate and return a PyiCloudService instance."""
@@ -33,14 +45,20 @@ def get_api() -> PyiCloudService:
         print("❌ Not configured. Run: icloud-manager setup")
         sys.exit(1)
     try:
-        return PyiCloudService(auth.email, auth.password)
+        api = PyiCloudService(auth.email, auth.password)
     except PyiCloudServiceNotActivatedException:
+        auth.clear()
         print("❌ Authentication failed. Check your credentials.")
         print("   Run: icloud-manager setup")
         sys.exit(1)
-    except Exception as e:
-        print(f"❌ Failed to connect to iCloud: {e}")
+    except Exception:
+        auth.clear()
+        print("❌ Failed to connect to iCloud.")
         sys.exit(1)
+    # Register sensitive strings for excepthook redaction, then wipe.
+    _sensitive_strings.extend([auth.email or "", auth.password or ""])
+    auth.clear()
+    return api
 
 
 def safe_run(fn, *args):
@@ -154,6 +172,9 @@ COMMANDS = {
 
 
 def main():
+    # Install excepthook that redacts credentials from unexpected tracebacks.
+    sys.excepthook = _redact_traceback
+
     if len(sys.argv) < 2:
         print("iCloud Manager — manage iCloud from the terminal")
         print()

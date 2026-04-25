@@ -8,7 +8,7 @@ or a dedicated secrets manager.
 """
 import json
 import os
-import tempfile
+import secrets
 import getpass
 from pathlib import Path
 
@@ -41,20 +41,28 @@ class AuthManager:
             print(f"❌ Failed to load credentials: {e}")
             return False
 
+    def clear(self):
+        """Wipe credentials from memory."""
+        self.email = None
+        self.password = None
+
     def save(self, email: str, password: str):
-        """Save credentials atomically with restricted permissions."""
+        """Save credentials atomically with restricted permissions.
+
+        Uses os.open with O_CREAT|O_EXCL and mode 0o600 so the temp file
+        is created with restricted permissions atomically -- no race window
+        between file creation and chmod.
+        """
         CREDS_DIR.mkdir(parents=True, exist_ok=True)
-        # Write to temp file first, then atomic rename
-        tmp_fd, tmp_path = tempfile.mkstemp(dir=CREDS_DIR, prefix=".creds-")
+        tmp_name = f".creds-{secrets.token_hex(8)}"
+        tmp_path = CREDS_DIR / tmp_name
+        fd = os.open(str(tmp_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         try:
-            with os.fdopen(tmp_fd, "w") as f:
+            with os.fdopen(fd, "w") as f:
                 json.dump({"email": email, "password": password}, f)
-            os.chmod(tmp_path, 0o600)
-            os.rename(tmp_path, CREDS_FILE)
+            os.rename(str(tmp_path), CREDS_FILE)
         except Exception:
-            # Clean up temp file on failure
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+            os.unlink(str(tmp_path))
             raise
 
     def setup_interactive(self):
@@ -72,5 +80,5 @@ class AuthManager:
             print("❌ Email and password required.")
             return False
         self.save(email, password)
-        print(f"✅ Credentials saved to {CREDS_FILE}")
+        print("✅ Credentials saved.")
         return True

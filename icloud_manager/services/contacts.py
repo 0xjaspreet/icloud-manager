@@ -2,6 +2,8 @@
 import json
 from pyicloud import PyiCloudService
 
+MAX_QUERY_LENGTH = 256
+
 
 class ContactsService:
     def __init__(self, api: PyiCloudService):
@@ -18,6 +20,8 @@ class ContactsService:
         return json.dumps(out, indent=2)
 
     def search(self, query: str) -> str:
+        if len(query) > MAX_QUERY_LENGTH:
+            return json.dumps({"error": "query too long"})
         q = query.lower()
         out = []
         for c in self.contacts:

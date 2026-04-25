@@ -2,6 +2,8 @@
 import json
 from pyicloud import PyiCloudService
 
+MAX_FOLDER_ID_LENGTH = 256
+
 
 class NotesService:
     def __init__(self, api: PyiCloudService):
@@ -12,6 +14,10 @@ class NotesService:
         return json.dumps([{"name": f.name, "id": f.id} for f in folders], indent=2)
 
     def list(self, folder_id: str = None) -> str:
+        if folder_id is not None:
+            folder_id = folder_id.strip()
+            if not folder_id or len(folder_id) > MAX_FOLDER_ID_LENGTH:
+                return json.dumps({"error": "invalid folder id"})
         folders = [(f.name, f.id) for f in self.notes.folders()
                    if not folder_id or f.id == folder_id]
         result = []

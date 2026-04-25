@@ -2,6 +2,8 @@
 import json
 from pyicloud import PyiCloudService
 
+MAX_TITLE_LENGTH = 1024
+
 
 class RemindersService:
     def __init__(self, api: PyiCloudService):
@@ -26,6 +28,11 @@ class RemindersService:
         return json.dumps(result, indent=2)
 
     def add(self, title: str, guid: str = None, due: str = None) -> str:
+        title = title.strip()
+        if not title:
+            return json.dumps({"error": "title is required"})
+        if len(title) > MAX_TITLE_LENGTH:
+            return json.dumps({"error": "title too long"})
         if not guid:
             lists = self.rem.lists()
             if not lists:
