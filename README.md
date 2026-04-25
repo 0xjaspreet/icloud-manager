@@ -1,37 +1,59 @@
 # iCloud Manager
 
-> *The bridge between your AI agent and your Apple ecosystem. No iPhone required.*
+> **Let your personal AI agent manage your iCloud.**
+> Calendar. Reminders. Notes. Contacts. Find My. Drive.
+> No iPhone needed. Just your agent and a terminal.
 
-Your personal AI assistant wants to add events to your calendar, set reminders,
-find your phone, or check your notes — but you're on Linux and iCloud locked
-you out. Not anymore.
+---
 
-**icloud-manager** exposes your iCloud data as a dead-simple CLI that any AI
-agent (or human) can call. Built for Hermes, Claude Code, OpenClaw, or whatever
-agent you've got running in your terminal.
+Your AI agent lives in your terminal. It manages your email, your files,
+your schedule. But iCloud? That's been a walled garden.
+
+Not anymore.
+
+**icloud-manager** is the missing bridge — a CLI your agent can call to add
+calendar events, set reminders, ping your lost phone, pull up contacts, and
+more. Built specifically so a personal AI agent (Hermes, Claude Code,
+OpenClaw — yours) can fully participate in your Apple ecosystem from Linux.
 
 ```
-┌──────────────────────────────────────────┐
-│  "Hey agent, add NPower interview to     │
-│   my calendar April 29 at 9am"           │
-│                                          │
-│  $ icloud-manager calendar add \         │
-│     "Interview for NPower Canada" \      │
-│     "2026-04-29 9:00 AM" \              │
-│     "2026-04-29 10:00 AM"               │
-│                                          │
-│  ✅ Done. You're all set, Jaspreet.      │
-└──────────────────────────────────────────┘
+Your agent: "Want me to add that to your calendar?"
+     iCloud: 🔒
+icloud-manager: 🔓 Go ahead.
+
+$ icloud-manager calendar add \
+    "NPower Interview" \
+    "2026-04-29 9:00 AM" \
+    "2026-04-29 10:00 AM"
+
+✅ Done. You're all set.
 ```
 
-## Why?
+## The Pitch
 
-AI agents are the future of personal computing. But agents can't tap into the
-Apple ecosystem without janky workarounds. This tool gives your agent the same
-iCloud access you have on your phone — calendar, reminders, notes, contacts,
-Find My, and Drive — all from a Linux terminal.
+Your personal AI agent should be able to do everything you can do on your
+phone. That includes iCloud. This tool makes that real — your agent reads
+your calendar, adds reminders while you're driving, finds your phone when
+you lose it, checks your notes during a conversation. All from the terminal
+it already lives in.
 
-**Built by an AI agent, for AI agents.** Literally. Hermes built this.
+**Main theme:** Your AI agent manages your iCloud.
+**Main purpose:** So you don't have to switch contexts. Ask your agent. It
+handles it.
+
+## What Your Agent Can Do
+
+| Service  | Agent Reads | Agent Writes | Example |
+|----------|:-----------:|:------------:|---------|
+| Calendar | ✅ | ✅ | "Added to your calendar" |
+| Reminders| ✅ | ✅ | "I'll remind you at 6pm" |
+| Find My  | ✅ | ✅ | "iPhone's at 123 Portage Ave" |
+| Notes    | ✅ | ❌ | "Here's your shopping list" |
+| Contacts | ✅ | ❌ | "Found Aman's number" |
+| Drive    | ✅ | ❌ | "12 files in your Drive" |
+
+> **Notes & Contacts are read-only** — Apple's CloudKit API doesn't expose
+> write access (yet). Calendar and Reminders cover 90% of agent use cases.
 
 ## Quick Start
 
@@ -39,108 +61,87 @@ Find My, and Drive — all from a Linux terminal.
 # Install
 pip install git+https://github.com/0xjaspreet/icloud-manager.git
 
-# One-time setup (needs Apple ID + app-specific password)
+# One-time setup (Apple ID + app-specific password)
 icloud-manager setup
 
-# Your agent can now do stuff like:
-icloud-manager calendar add "Dentist" "2026-05-01 2:00 PM" "2026-05-01 3:00 PM"
-icloud-manager reminders add "Buy groceries"
+# Now your agent can:
+icloud-manager calendar add "Dinner with Mom" "2026-05-01 7:00 PM" "2026-05-01 9:00 PM"
+icloud-manager reminders add "Pick up dry cleaning" --due "2026-05-02"
 icloud-manager findmy sound "iPhone"
+icloud-manager contacts search "Aman"
 ```
 
-## What Your Agent Can Do
+## Wiring It Into Your Agent
 
-| Service  | Read | Write | What your agent says |
-|----------|------|-------|---------------------|
-| Calendar | ✅   | ✅    | "Adding that to your calendar now" |
-| Reminders| ✅   | ✅    | "I'll remind you about that" |
-| Find My  | ✅   | ✅    | "Your iPhone is at Tim Hortons on Portage" |
-| Notes    | ✅   | ❌    | "Here's what's in your notes folder" |
-| Contacts | ✅   | ❌    | "Found 3 matches for 'Aman'" |
-| Drive    | ✅   | ❌    | "You've got 9 files in iCloud Drive" |
+This is a CLI. Any agent that runs shell commands can use it.
 
-> ⚠️ **Notes & Contacts** are read-only (Apple hasn't opened those APIs).
-> Calendar and Reminders are fully functional — which covers 90% of what
-> you'd ask an agent to do.
+### Hermes / Claude Code / OpenClaw
 
-## Setup for Your AI Agent
-
-If you're wiring this into an AI agent (Claude, Hermes, OpenClaw, etc.), here's
-what you need:
-
-1. **Install the tool**
-   ```bash
-   pip install git+https://github.com/0xjaspreet/icloud-manager.git
-   ```
-2. **Run setup once** — `icloud-manager setup` (stores creds at `~/.config/icloud-manager/`)
-3. **Add to your agent's tool list** — it's just a CLI. Any agent that can run
-   shell commands can use it.
-4. **ADP must be OFF** — Advanced Data Protection encrypts Reminders/Notes
-   end-to-end, which blocks API access. Turn it off for full functionality.
-
-### Example: Hermes Agent
+Add these to your agent's tool definitions:
 
 ```bash
-# Calendar — default timezone is your local zone
 icloud-manager calendar list
-icloud-manager calendar add "Team Standup" "2026-05-01 9:00 AM" "2026-05-01 9:30 AM"
+icloud-manager calendar add "<title>" "<start>" "<end>"
 icloud-manager calendar delete <event-id>
 
-# Reminders
 icloud-manager reminders lists
 icloud-manager reminders list
-icloud-manager reminders add "Buy groceries" --due "2026-05-01"
+icloud-manager reminders add "<title>" --due "<date>"
 
-# Notes (read-only)
 icloud-manager notes folders
-icloud-manager notes list
-icloud-manager notes list --folder "workRelated"
+icloud-manager notes list --folder "<folder>"
 
-# Contacts (read-only)
 icloud-manager contacts list
-icloud-manager contacts search "John"
+icloud-manager contacts search "<name>"
 
-# Find My iPhone
 icloud-manager findmy list
-icloud-manager findmy locate "iPhone"
-icloud-manager findmy sound "iPhone"
+icloud-manager findmy locate "<device>"
+icloud-manager findmy sound "<device>"
 
-# iCloud Drive
 icloud-manager drive list
 ```
 
-## Requirements
+That's it. No API keys, no webhooks, no cloud services. Your agent talks to
+iCloud directly from your machine.
+
+## Prerequisites
 
 - Python 3.10+
-- `pyicloud` — iCloud API wrapper
-- `pytz` — timezone handling
-- An Apple ID with an app-specific password
-- ADP turned **off** (Settings → iCloud → Advanced Data Protection)
+- `pyicloud` and `pytz`
+- Apple ID with [app-specific password](https://support.apple.com/en-us/102654)
+- **ADP turned OFF** (Settings → iCloud → Advanced Data Protection)
+- A personal AI agent (optional, but that's the whole point)
+
+## Security
+
+- Credentials live at `~/.config/icloud-manager/creds.json` — `chmod 600`
+- Session cached after first 2FA
+- Everything stays on your machine. Zero telemetry. Zero cloud middlemen.
 
 ## FAQ
 
-**Can my agent really manage my calendar?**
-Yes. Add, list, delete events — all from terminal. Timezone defaults to your
-local zone.
+**Why not just use my phone?**
+Because your AI agent can't tap your phone's screen. It can run a CLI.
 
-**Is this secure?**
-Credentials stored at `~/.config/icloud-manager/creds.json` with `chmod 600`.
-Session cached after first 2FA. No data leaves your machine.
+**Is this production-ready?**
+It's production-ready for a personal agent. Not for a SaaS product. Not for
+managing 10,000 iCloud accounts. One human, one agent, one iCloud.
 
-**Can I contribute?**
-Absolutely. PRs welcome. Especially if you figure out how to write Notes or
-Contacts via CloudKit — that's the holy grail.
+**Can I write to Notes or Contacts?**
+Not yet. Apple's CloudKit API is the bottleneck. If you reverse-engineer it,
+PRs are wide open.
 
-**Who built this?**
-Hermes — Jaspreet's personal AI agent. If your agent does something cool with
-this, tag [@0xjaspreet](https://github.com/0xjaspreet).
+**Who made this?**
+Hermes — an AI agent. Built by an agent, for agents.
+Repo owned by [@0xjaspreet](https://github.com/0xjaspreet).
 
 ## License
 
-MIT — go build cool stuff.
+MIT. Take it, wire it into your agent, make it yours.
 
 ---
 
 <p align="center">
-  <sub>Built by Hermes, for Hermes.</sub>
+  <sub>Main theme: your AI agent manages your iCloud.</sub><br>
+  <sub>Built by Hermes, powered by pyicloud, running on Linux.</sub>
 </p>
