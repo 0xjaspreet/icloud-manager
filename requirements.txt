@@ -1,2 +1,2 @@
-pyicloud>=1.0.0
+pyicloud>=1.0.0,<2.0.0
 pytz>=2024.1

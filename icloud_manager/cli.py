@@ -13,7 +13,9 @@ Usage:
 """
 
 import sys
+import traceback
 from pyicloud import PyiCloudService
+from pyicloud.exceptions import PyiCloudServiceNotActivatedException
 
 from icloud_manager.services.auth import AuthManager
 from icloud_manager.services.calendar import CalendarService
@@ -25,11 +27,30 @@ from icloud_manager.services.drive import DriveService
 
 
 def get_api() -> PyiCloudService:
+    """Authenticate and return a PyiCloudService instance."""
     auth = AuthManager()
     if not auth.load():
         print("❌ Not configured. Run: icloud-manager setup")
         sys.exit(1)
-    return PyiCloudService(auth.email, auth.password)
+    try:
+        return PyiCloudService(auth.email, auth.password)
+    except PyiCloudServiceNotActivatedException:
+        print("❌ Authentication failed. Check your credentials.")
+        print("   Run: icloud-manager setup")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Failed to connect to iCloud: {e}")
+        sys.exit(1)
+
+
+def safe_run(fn, *args):
+    """Run a service function, catching and reporting errors cleanly."""
+    try:
+        result = fn(*args)
+        if result:
+            print(result)
+    except Exception as e:
+        print(f"❌ Error: {e}")
 
 
 def cmd_setup():
@@ -44,11 +65,11 @@ def cmd_calendar(args):
         print("Usage: icloud-manager calendar <list|add|delete>")
         return
     if args[0] == "list":
-        print(svc.list())
+        safe_run(svc.list)
     elif args[0] == "add" and len(args) >= 4:
-        print(svc.add(args[1], args[2], args[3]))
+        safe_run(svc.add, args[1], args[2], args[3])
     elif args[0] == "delete" and len(args) >= 2:
-        print(svc.delete(args[1]))
+        safe_run(svc.delete, args[1])
     else:
         print("Usage: calendar list | add <title> <start> <end> | delete <id>")
 
@@ -60,13 +81,13 @@ def cmd_reminders(args):
         print("Usage: icloud-manager reminders <lists|list|add>")
         return
     if args[0] == "lists":
-        print(svc.lists())
+        safe_run(svc.lists)
     elif args[0] == "list":
-        print(svc.list(args[1] if len(args) > 1 else None))
+        safe_run(svc.list, args[1] if len(args) > 1 else None)
     elif args[0] == "add" and len(args) >= 2:
         guid = args[2] if len(args) > 2 else None
         due = args[3] if len(args) > 3 else None
-        print(svc.add(args[1], guid, due))
+        safe_run(svc.add, args[1], guid, due)
     else:
         print("Usage: reminders lists | list [guid] | add <title> [guid] [due]")
 
@@ -78,9 +99,9 @@ def cmd_notes(args):
         print("Usage: icloud-manager notes <folders|list>")
         return
     if args[0] == "folders":
-        print(svc.folders())
+        safe_run(svc.folders)
     elif args[0] == "list":
-        print(svc.list(args[1] if len(args) > 1 else None))
+        safe_run(svc.list, args[1] if len(args) > 1 else None)
     else:
         print("Usage: notes folders | list [folder-id]")
 
@@ -92,9 +113,9 @@ def cmd_contacts(args):
         print("Usage: icloud-manager contacts <list|search>")
         return
     if args[0] == "list":
-        print(svc.list())
+        safe_run(svc.list)
     elif args[0] == "search" and len(args) >= 2:
-        print(svc.search(" ".join(args[1:])))
+        safe_run(svc.search, " ".join(args[1:]))
     else:
         print("Usage: contacts list | search <name>")
 
@@ -106,11 +127,11 @@ def cmd_findmy(args):
         print("Usage: icloud-manager findmy <list|locate|sound>")
         return
     if args[0] == "list":
-        print(svc.list())
+        safe_run(svc.list)
     elif args[0] == "locate" and len(args) >= 2:
-        print(svc.locate(" ".join(args[1:])))
+        safe_run(svc.locate, " ".join(args[1:]))
     elif args[0] == "sound" and len(args) >= 2:
-        print(svc.sound(" ".join(args[1:])))
+        safe_run(svc.sound, " ".join(args[1:]))
     else:
         print("Usage: findmy list | locate <name> | sound <name>")
 
@@ -118,7 +139,7 @@ def cmd_findmy(args):
 def cmd_drive(args):
     api = get_api()
     svc = DriveService(api)
-    print(svc.list())
+    safe_run(svc.list)
 
 
 COMMANDS = {

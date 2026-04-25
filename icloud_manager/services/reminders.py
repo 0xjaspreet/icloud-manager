@@ -27,6 +27,9 @@ class RemindersService:
 
     def add(self, title: str, guid: str = None, due: str = None) -> str:
         if not guid:
-            guid = self.rem.lists()[0].guid
+            lists = self.rem.lists()
+            if not lists:
+                return json.dumps({"error": "no reminder lists found"})
+            guid = lists[0].guid
         self.rem.create(title, guid, due_date=due)
         return json.dumps({"status": "created", "title": title})

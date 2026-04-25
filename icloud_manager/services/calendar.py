@@ -36,7 +36,15 @@ class CalendarService:
         """Add an event. Accepts '2026-04-29 9:00 AM' or ISO format."""
         start = self._parse_datetime(start_str)
         end = self._parse_datetime(end_str)
-        pguid = self.cal.get_calendars()[0]["guid"]
+        if start is None or end is None:
+            return json.dumps({
+                "error": "invalid date",
+                "detail": "Use format: '2026-04-29 9:00 AM' or ISO 8601",
+            })
+        calendars = self.cal.get_calendars()
+        if not calendars:
+            return json.dumps({"error": "no calendars found"})
+        pguid = calendars[0]["guid"]
         event = EventObject(pguid=pguid, title=title, start_date=start, end_date=end)
         result = self.cal.add_event(event)
         return json.dumps({"status": "created", "id": result.get("guid", ""), "title": title})
@@ -58,14 +66,22 @@ class CalendarService:
                 return json.dumps({"status": "deleted", "id": event_id})
         return json.dumps({"error": "not found", "id": event_id})
 
-    def _parse_datetime(self, value: str) -> datetime:
-        """Parse '2026-04-29 9:00 AM' or ISO format, defaulting to local timezone."""
+    def _parse_datetime(self, value: str):
+        """Parse '2026-04-29 9:00 AM' or ISO format, localizing to default tz.
+        Returns a datetime or None on failure."""
         try:
             dt = datetime.fromisoformat(value)
         except ValueError:
-            dt = datetime.strptime(value, "%Y-%m-%d %I:%M %p")
+            try:
+                dt = datetime.strptime(value, "%Y-%m-%d %I:%M %p")
+            except ValueError:
+                return None
+        # Only localize naive datetimes; pytz throws on already-aware ones
         if dt.tzinfo is None:
             dt = self.tz.localize(dt)
+        elif hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            # Already timezone-aware — convert to configured tz
+            dt = dt.astimezone(self.tz)
         return dt
 
     @staticmethod
