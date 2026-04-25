@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "icloud-manager"
+version = "0.1.0"
+description = "Manage iCloud Calendar, Reminders, Notes, Contacts, Find My, and Drive from the Linux terminal"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "pyicloud>=1.0.0",
+    "pytz>=2024.1",
+]
+authors = [
+    {name = "Jaspreet Singh", email = "jaspreetsinghintp@gmail.com"},
+]
+keywords = ["icloud", "calendar", "reminders", "notes", "linux", "terminal", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/jjaspreetsingh/icloud-manager"
+Repository = "https://github.com/jjaspreetsingh/icloud-manager"
+
+[project.scripts]
+icloud-manager = "icloud_manager.cli:main"
