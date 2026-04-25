@@ -28,8 +28,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jjaspreetsingh/icloud-manager"
-Repository = "https://github.com/jjaspreetsingh/icloud-manager"
+Homepage = "https://github.com/0xjaspreet/icloud-manager"
+Repository = "https://github.com/0xjaspreet/icloud-manager"
 
 [project.scripts]
 icloud-manager = "icloud_manager.cli:main"

@@ -20,7 +20,7 @@ icloud-manager setup
 Or from source:
 
 ```bash
-git clone https://github.com/jjaspreetsingh/icloud-manager
+git clone https://github.com/0xjaspreet/icloud-manager
 cd icloud-manager
 pip install -e .
 icloud-manager setup
